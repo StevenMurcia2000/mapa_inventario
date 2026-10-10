@@ -8,7 +8,6 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <link rel="stylesheet" href="css/leaflet.css">
         <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
-        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
         <link rel="stylesheet" href="css/qgis2web.css">
         <link rel="stylesheet" href="css/fontawesome-all.min.css">
         <link rel="stylesheet" href="css/leaflet-search.css">
@@ -30,7 +29,6 @@
         <script src="js/qgis2web_expressions.js"></script>
         <script src="js/leaflet.js"></script>
         <script src="js/L.Control.Layers.Tree.min.js"></script>
-        <script src="js/L.Control.Locate.min.js"></script>
         <script src="js/leaflet.rotatedMarker.js"></script>
         <script src="js/leaflet.pattern.js"></script>
         <script src="js/leaflet-hash.js"></script>
@@ -51,7 +49,7 @@
         }
         var map = L.map('map', {
             zoomControl:false, maxZoom:28, minZoom:1
-        }).fitBounds([[3.381931535697739,-75.62591010726663],[4.999618091080704,-74.3094650187008]]);
+        }).fitBounds([[3.6489268650961844,-75.4226990021969],[3.9677417161465542,-75.12888341192452]]);
         var hash = new L.Hash(map);
         map.attributionControl.setPrefix('<a href="https://github.com/qgis2web/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
         var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
@@ -130,7 +128,6 @@
         var zoomControl = L.control.zoom({
             position: 'topleft'
         }).addTo(map);
-        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
         var measureControl = new L.Control.Measure({
             position: 'topleft',
             primaryLengthUnit: 'meters',
@@ -471,7 +468,7 @@
                 case 'PREDIO':
                     return {
                 pane: 'pane_INVENTARIO_CONCESIONES_AGUA_3',
-                radius: 2.0,
+                radius: 2.4,
                 opacity: 1,
                 color: 'rgba(255,2,212,1.0)',
                 dashArray: '',
@@ -506,6 +503,59 @@
         });
         bounds_group.addLayer(layer_INVENTARIO_CONCESIONES_AGUA_3);
         map.addLayer(layer_INVENTARIO_CONCESIONES_AGUA_3);
+        const url = {"Nominatim OSM": "https://nominatim.openstreetmap.org/search?format=geojson&addressdetails=1&",
+        "France BAN": "https://api-adresse.data.gouv.fr/search/?"}
+        var photonControl = L.control.photon({
+            url: url["Nominatim OSM"],
+            feedbackLabel: '',
+            position: 'topleft',
+            includePosition: true,
+            initial: true,
+            // resultsHandler: myHandler,
+        }).addTo(map);
+        photonControl._container.childNodes[0].style.borderRadius="10px"
+        // Create a variable to store the geoJSON data
+        var x = null;
+        // Create a variable to store the marker
+        var marker = null;
+        // Add an event listener to the Photon control to create a marker from the returned geoJSON data
+        var z = null;
+        photonControl.on('selected', function(e) {
+            console.log(photonControl.search.resultsContainer);
+            if (x != null) {
+                map.removeLayer(obj3.marker);
+                map.removeLayer(x);
+            }
+            obj2.gcd = e.choice;
+            x = L.geoJSON(obj2.gcd).addTo(map);
+            var label = typeof obj2.gcd.properties.label === 'undefined' ? obj2.gcd.properties.display_name : obj2.gcd.properties.label;
+            obj3.marker = L.marker(x.getLayers()[0].getLatLng()).bindPopup(label).addTo(map);
+            map.setView(x.getLayers()[0].getLatLng(), 17);
+            z = typeof e.choice.properties.label === 'undefined'? e.choice.properties.display_name : e.choice.properties.label;
+            console.log(e);
+            e.target.input.value = z;
+        });
+        var search = document.getElementsByClassName("leaflet-photon leaflet-control")[0];
+        search.classList.add("leaflet-control-search")
+        search.style.display = "flex";
+        search.style.backgroundColor="rgba(255,255,255,0.5)" 
+
+        // Create the new button element
+        var button = document.createElement("div");
+        button.id = "gcd-button-control";
+        button.className = "gcd-gl-btn fa fa-search search-button";
+
+        // Insert the button at the beginning of the search control
+        search.insertBefore(button, search.firstChild);
+        last = search.lastChild;
+        last.style.display = "none";
+        button.addEventListener("click", function (e) {
+            if (last.style.display === "none") {
+                last.style.display = "block";
+            } else {
+                last.style.display = "none";
+            }
+        });
         var overlaysTree = [
             {label: 'INVENTARIO_CONCESIONES_AGUA<br /><table><tr><td style="text-align: center;"><img src="legend/INVENTARIO_CONCESIONES_AGUA_3_CAPTACION0.png" /></td><td>CAPTACION</td></tr><tr><td style="text-align: center;"><img src="legend/INVENTARIO_CONCESIONES_AGUA_3_PREDIO1.png" /></td><td>PREDIO</td></tr></table>', layer: layer_INVENTARIO_CONCESIONES_AGUA_3},
             {label: '<img src="legend/Veredas_2.png" /> Veredas', layer: layer_Veredas_2},
@@ -573,7 +623,7 @@
         });       
         setBounds();
         map.addControl(new L.Control.Search({
-            layer: layer_INVENTARIO_CONCESIONES_AGUA_5,
+            layer: layer_INVENTARIO_CONCESIONES_AGUA_3,
             initial: false,
             hideMarkerOnCollapse: true,
             propertyName: 'NOMBRES Y'}));
